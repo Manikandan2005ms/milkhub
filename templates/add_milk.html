@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Add Milk Entry | MilkHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-in">
+    <div class="col-12 col-lg-8">
+        <!-- Header -->
+        <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for(user.role + '_dashboard') }}" class="btn btn-premium-outline btn-sm rounded-circle p-2">
+                    <i data-lucide="arrow-left" style="width: 20px;"></i>
+                </a>
+                <div>
+                    <h1 class="h2 fw-bold mb-0">Milk Entry</h1>
+                    <p class="text-muted mb-0">Record collection details for Center {{ user.center_id }}.</p>
+                </div>
+            </div>
+            <a href="{{ url_for('add_farmer') }}" class="btn btn-premium-outline btn-sm">
+                <i data-lucide="user-plus" class="me-1"></i> Add Farmer
+            </a>
+        </div>
+
+        <!-- Today's Rate Card -->
+        <div class="glass-card mb-4 overflow-hidden border-primary bg-primary bg-opacity-5">
+            <div class="p-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-card-icon icon-blue mb-0" style="width: 40px; height: 40px;">
+                        <i data-lucide="tag" style="width: 20px;"></i>
+                    </div>
+                    <div>
+                        <p class="small text-muted fw-bold text-uppercase mb-0">Today's Rate</p>
+                        {% if current_rate %}
+                            <h4 class="fw-bold mb-0 text-primary">₹ {{ "%.2f"|format(current_rate.base_rate) }}/L</h4>
+                        {% else %}
+                            <h4 class="h6 mb-0 text-warning">Awaiting Rate Setup</h4>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-end text-muted small px-3">
+                    <span class="d-block">Fat 4+: 100%</span>
+                    <span class="d-block">Fat 3-4: -₹2.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entry Form -->
+        <div class="glass-card p-4 p-md-5 mb-5 shadow-lg">
+            <form action="{{ url_for('add_milk') }}" method="POST" class="stagger-load">
+                <div class="row g-4">
+                    <!-- Session & Date -->
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-bold text-muted">COLLECTION DATE</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 rounded-start-4 ps-3">
+                                <i data-lucide="calendar" class="text-muted" style="width: 18px;"></i>
+                            </span>
+                            <input type="date" class="form-control premium-input border-start-0 rounded-end-4" name="date" value="{{ today or '' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-bold text-muted">SHIFT / SESSION</label>
+                        <div class="d-flex gap-2">
+                            <input type="radio" class="btn-check" name="session" id="fn" value="FN" checked required>
+                            <label class="btn btn-premium-outline flex-fill py-2" for="fn">
+                                <i data-lucide="sun" class="me-1" style="width: 16px;"></i> Morning
+                            </label>
+
+                            <input type="radio" class="btn-check" name="session" id="an" value="AN" required>
+                            <label class="btn btn-premium-outline flex-fill py-2" for="an">
+                                <i data-lucide="moon" class="me-1" style="width: 16px;"></i> Evening
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Farmer Selection -->
+                    <div class="col-12">
+                        <label for="farmer_id" class="form-label small fw-bold text-muted">SELECT FARMER</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 rounded-start-4 ps-3">
+                                <i data-lucide="user" class="text-muted" style="width: 18px;"></i>
+                            </span>
+                            <select class="form-select premium-input border-start-0 rounded-end-4" id="farmer_id" name="farmer_id" required>
+                                <option value="" disabled selected>-- Select participating farmer --</option>
+                                {% for farmer in farmers %}
+                                    <option value="{{ farmer.id }}">{{ farmer.name }} ({{ farmer.phone }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-12"><hr class="opacity-10 mb-2"></div>
+
+                    <!-- Milk Metrics -->
+                    <div class="col-12 col-md-6">
+                        <label for="litres" class="form-label small fw-bold text-muted text-center d-block">QUANTITY (LITRES)</label>
+                        <input type="number" class="form-control premium-input text-center fs-3 fw-bold py-3 shadow-sm" 
+                               id="litres" name="litres" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="fat" class="form-label small fw-bold text-muted text-center d-block">FAT PERCENTAGE (%)</label>
+                        <input type="number" class="form-control premium-input text-center fs-3 fw-bold py-3 text-primary shadow-sm" 
+                               id="fat" name="fat" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="snf" class="form-label small fw-bold text-muted">SNF (OPTIONAL)</label>
+                        <input type="number" class="form-control premium-input text-center" id="snf" name="snf" step="0.01" min="0" placeholder="e.g. 8.5">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="water_percent" class="form-label small fw-bold text-muted">WATER % (OPTIONAL)</label>
+                        <input type="number" class="form-control premium-input text-center" id="water_percent" name="water_percent" step="0.01" min="0" placeholder="e.g. 2.0">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="ph" class="form-label small fw-bold text-muted">pH LEVEL (OPTIONAL)</label>
+                        <input type="number" class="form-control premium-input text-center" id="ph" name="ph" step="0.01" min="0" max="14" placeholder="e.g. 6.6">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="temperature" class="form-label small fw-bold text-muted">TEMPERATURE (°C) (OPTIONAL)</label>
+                        <input type="number" class="form-control premium-input text-center" id="temperature" name="temperature" step="0.1" min="0" placeholder="e.g. 35.0">
+                    </div>
+
+                    <div class="col-12 col-md-6 mx-auto mt-5">
+                        <button type="submit" class="btn btn-premium btn-lg w-100 py-3 justify-content-center">
+                            Save Data Record
+                            <i data-lucide="check-circle" class="ms-1" style="width: 20px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- IoT API Ref (Collapsed/Clean) -->
+        <div class="glass-card p-4 transition-all">
+            <a class="d-flex justify-content-between align-items-center text-decoration-none" data-bs-toggle="collapse" href="#iotApi">
+                <div class="d-flex align-items-center gap-2">
+                    <i data-lucide="cpu" class="text-primary" style="width: 20px;"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Developer: IoT Connector Info</h6>
+                </div>
+                <i data-lucide="chevron-down" class="text-muted"></i>
+            </a>
+            <div class="collapse mt-3" id="iotApi">
+                <p class="text-muted small">Post JSON to <code>/api/machine_entry</code> for direct integration:</p>
+                <div class="p-3 bg-dark rounded-4 mt-2">
+                    <pre class="mb-0 text-light small" style="white-space: pre-wrap;"><code>{
+  "farmer_id": 1,
+  "litres": 15.2,
+  "fat": 4.5,
+  "snf": 8.7
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Visual indicators for entry validation
+    const inputs = document.querySelectorAll('.premium-input[required]');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            if(input.value) {
+                input.classList.add('border-primary');
+            } else {
+                input.classList.remove('border-primary');
+            }
+        });
+    });
+</script>
+{% endblock %}
+

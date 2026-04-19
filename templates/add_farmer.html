@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Add Farmer | MilkHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-in">
+    <div class="col-12 col-md-8 col-lg-6">
+        <!-- Header -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="{{ url_for('farmers_list') }}" class="btn btn-premium-outline btn-sm rounded-circle p-2">
+                <i data-lucide="arrow-left" style="width: 20px;"></i>
+            </a>
+            <div>
+                <h1 class="h2 fw-bold mb-0">Add New Farmer</h1>
+                <p class="text-muted mb-0">Register a new supplier to the system.</p>
+            </div>
+        </div>
+
+        <!-- Add Form -->
+        <div class="glass-card p-4 p-md-5">
+            <form action="{{ url_for('add_farmer') }}" method="POST">
+                <div class="mb-4">
+                    <label for="name" class="form-label small fw-bold text-muted">FULL NAME</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 ps-3">
+                            <i data-lucide="user" class="text-muted" style="width: 18px;"></i>
+                        </span>
+                        <input type="text" class="form-control premium-input border-start-0" id="name" name="name" placeholder="Enter farmer's full name" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="phone" class="form-label small fw-bold text-muted">MOBILE NUMBER</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 ps-3">
+                            <i data-lucide="phone" class="text-muted" style="width: 18px;"></i>
+                        </span>
+                        <input type="tel" class="form-control premium-input border-start-0" id="phone" name="phone" placeholder="e.g. 9876543210" required>
+                    </div>
+                    <div class="form-text small">This will be used for login and Telegram notifications.</div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="village" class="form-label small fw-bold text-muted">VILLAGE / ADDRESS</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 ps-3">
+                            <i data-lucide="map-pin" class="text-muted" style="width: 18px;"></i>
+                        </span>
+                        <input type="text" class="form-control premium-input border-start-0" id="village" name="village" placeholder="Enter village or address">
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <label for="join_date" class="form-label small fw-bold text-muted">JOINING DATE</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 ps-3">
+                            <i data-lucide="calendar" class="text-muted" style="width: 18px;"></i>
+                        </span>
+                        <input type="date" class="form-control premium-input border-start-0" id="join_date" name="join_date" value="{{ today }}">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-premium w-100 py-3 justify-content-center">
+                    Register Farmer
+                    <i data-lucide="user-plus" class="ms-1" style="width: 20px;"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

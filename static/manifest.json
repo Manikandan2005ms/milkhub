@@ -1,0 +1,17 @@
+{
+  "short_name": "MilkHub",
+  "name": "Milk Collection Hub",
+  "icons": [
+    {
+      "src": "/static/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512 192x192"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#f8fafc",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#3b82f6",
+  "description": "Daily Dairy Drop-offs and Pricing Platform."
+}

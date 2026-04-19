@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Upload | MilkHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .drag-drop-zone {
+        border: 2px dashed var(--primary);
+        border-radius: var(--radius-lg);
+        background: rgba(var(--primary-rgb), 0.02);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .drag-drop-zone:hover, .drag-drop-zone.dragover {
+        background: rgba(var(--primary-rgb), 0.05);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+    }
+    .file-icon-animated {
+        font-size: 3rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+    }
+    .drag-drop-zone:hover .file-icon-animated {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-in">
+    <div class="col-12 col-lg-8">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="{{ url_for('operator_dashboard') }}" class="btn btn-premium-outline btn-sm rounded-circle p-2">
+                <i data-lucide="arrow-left" style="width: 20px;"></i>
+            </a>
+            <div>
+                <h1 class="h2 fw-bold mb-0">Bulk Records Upload</h1>
+                <p class="text-muted mb-0">Import large datasets via CSV or Excel efficiently.</p>
+            </div>
+        </div>
+
+        <!-- Upload Zone -->
+        <div class="glass-card p-4 p-md-5 mb-5 shadow-lg">
+            <form id="uploadForm" action="{{ url_for('bulk_upload') }}" method="POST" enctype="multipart/form-data">
+                <div id="dragDropArea" class="drag-drop-zone mb-4">
+                    <div class="file-icon-animated">
+                        <i data-lucide="file-up" style="width: 48px; height: 48px;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1">Select Collection File</h5>
+                    <p class="text-muted small">Drag & drop your .csv or .xlsx here</p>
+                    <input type="file" name="file" id="fileInput" class="d-none" accept=".csv, .xlsx, .xls">
+                    <div id="fileName" class="fw-bold text-primary mt-2"></div>
+                </div>
+                
+                <div class="progress mb-4 rounded-pill" style="height: 8px; display: none;" id="uploadProgress">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%"></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mx-auto">
+                        <button type="submit" class="btn btn-premium btn-lg w-100 py-3 disabled" id="uploadBtn">
+                            Process Data File
+                            <i data-lucide="zap" class="ms-1" style="width: 18px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {% if results %}
+        <!-- Results Summary -->
+        <div class="glass-card mb-5 overflow-hidden animate-slide-up">
+            <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">Processing Summary</h5>
+                <span class="badge-premium bg-primary bg-opacity-10 text-primary">Import #{{ range(1000, 9999)|random }}</span>
+            </div>
+            <div class="p-4">
+                <div class="row g-4 text-center">
+                    <div class="col-4">
+                        <p class="text-muted small fw-bold text-uppercase mb-1">Total Rows</p>
+                        <h2 class="display-6 fw-bold mb-0">{{ results.total }}</h2>
+                    </div>
+                    <div class="col-4">
+                        <p class="text-success small fw-bold text-uppercase mb-1">Saved</p>
+                        <h2 class="display-6 fw-bold mb-0 text-success">{{ results.inserted }}</h2>
+                    </div>
+                    <div class="col-4">
+                        <p class="text-danger small fw-bold text-uppercase mb-1">Errors</p>
+                        <h2 class="display-6 fw-bold mb-0 text-danger">{{ results.failed }}</h2>
+                    </div>
+                </div>
+
+                {% if results.summary %}
+                <div class="row g-3 mt-4">
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 glass-card bg-primary bg-opacity-5 border-0 text-center">
+                            <span class="text-muted small d-block mb-1">Total Milk Collected</span>
+                            <span class="h4 fw-bold mb-0">{{ "%.2f"|format(results.summary.total_litres) }} L</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 glass-card bg-success bg-opacity-5 border-0 text-center">
+                            <span class="text-muted small d-block mb-1">Quality Pass Rate</span>
+                            <span class="h4 fw-bold mb-0 text-success">{{ ((results.summary.good_quality / results.total) * 100)|round(1) if results.total > 0 else 0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if results.failed_rows %}
+        <!-- Error Details -->
+        <div class="glass-card overflow-hidden animate-slide-up border-danger">
+            <div class="p-3 bg-danger bg-opacity-10 border-bottom">
+                <h6 class="fw-bold mb-0 text-danger d-flex align-items-center gap-2">
+                    <i data-lucide="alert-circle" style="width: 18px;"></i>
+                    Failed Records Report
+                </h6>
+            </div>
+            <div class="premium-table-container rounded-0 border-0">
+                <table class="table premium-table mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Excel Row</th>
+                            <th>Reference Phone</th>
+                            <th>Validation Error</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results.failed_rows %}
+                        <tr>
+                            <td class="fw-bold">#{{ row.row_number }}</td>
+                            <td>{{ row.phone }}</td>
+                            <td><span class="text-danger small fw-medium">{{ row.reason }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="col-12 col-lg-4 mt-4 mt-lg-0 stagger-load">
+        <!-- Templates -->
+        <div class="glass-card p-4 mb-4">
+            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i data-lucide="download" class="text-primary" style="width: 20px;"></i>
+                Samples
+            </h5>
+            <p class="small text-muted mb-4">Download these templates to ensure your formatting matches the system requirements.</p>
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('download_template', file_type='csv') }}" class="btn btn-premium-outline btn-sm py-2">
+                    <div class="d-flex align-items-center gap-2 text-start">
+                        <i data-lucide="file-spreadsheet" class="text-success"></i>
+                        <span>Sample CSV</span>
+                    </div>
+                </a>
+                <a href="{{ url_for('download_template', file_type='excel') }}" class="btn btn-premium-outline btn-sm py-2">
+                    <div class="d-flex align-items-center gap-2 text-start">
+                        <i data-lucide="file-box" class="text-primary"></i>
+                        <span>Excel Template</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Format Guide -->
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i data-lucide="help-circle" class="text-primary" style="width: 20px;"></i>
+                Format Guide
+            </h5>
+            <div class="small text-muted">
+                <div class="mb-3 border-bottom pb-2">
+                    <span class="fw-bold text-dark d-block">farmer_phone</span>
+                    10-digit registered number
+                </div>
+                <div class="mb-3 border-bottom pb-2">
+                    <span class="fw-bold text-dark d-block">date</span>
+                    YYYY-MM-DD
+                </div>
+                <div class="mb-3 border-bottom pb-2">
+                    <span class="fw-bold text-dark d-block">session</span>
+                    FN (Morning) or AN (Evening)
+                </div>
+                <div class="mb-0">
+                    <span class="fw-bold text-dark d-block">fat / litres</span>
+                    Numeric values (e.g. 4.2, 10.5)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const area = document.getElementById('dragDropArea');
+    const input = document.getElementById('fileInput');
+    const nameDisplay = document.getElementById('fileName');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const progress = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('progressBar');
+
+    area.onclick = () => input.click();
+
+    area.ondragover = (e) => {
+        e.preventDefault();
+        area.classList.add('dragover');
+    };
+
+    area.ondragleave = () => {
+        area.classList.remove('dragover');
+    };
+
+    area.ondrop = (e) => {
+        e.preventDefault();
+        area.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            updateFileName();
+        }
+    };
+
+    input.onchange = () => updateFileName();
+
+    function updateFileName() {
+        if (input.files.length) {
+            nameDisplay.textContent = input.files[0].name;
+            uploadBtn.classList.remove('disabled');
+        } else {
+            nameDisplay.textContent = "";
+            uploadBtn.classList.add('disabled');
+        }
+    }
+
+    uploadForm.onsubmit = () => {
+        progress.style.display = 'block';
+        let width = 10;
+        const interval = setInterval(() => {
+            if (width >= 95) {
+                clearInterval(interval);
+            } else {
+                width += 2;
+                progressBar.style.width = width + '%';
+            }
+        }, 100);
+    };
+</script>
+{% endblock %}
+

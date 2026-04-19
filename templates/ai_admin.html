@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}AI Smart Admin | MilkHub{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-end gap-3 mb-5 animate-slide-up">
+    <div>
+        <h1 class="display-5 fw-bold mb-1 d-flex align-items-center gap-2">
+            <i data-lucide="brain-circuit" class="text-primary"></i> AI Core Admin
+        </h1>
+        <p class="text-muted mb-0">System-wide machine learning monitoring and risk detection.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('train_models') }}" class="btn btn-premium shadow-lg">
+            <i data-lucide="refresh-cw"></i> Retrain AI Models
+        </a>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-premium-outline">
+            <i data-lucide="layout-dashboard"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 animate-fade-in">
+    <div class="col-lg-8">
+        <!-- 1. High Risk Fraud Alerts -->
+        <div class="glass-card mb-4 border-danger animate-slide-up">
+            <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-danger d-flex align-items-center gap-2">
+                    <i data-lucide="shield-alert"></i> Critical Fraud Alerts
+                </h5>
+                <span class="badge-premium bg-danger bg-opacity-10 text-danger">{{ suspicious|length }} Threats Detected</span>
+            </div>
+            <div class="premium-table-container rounded-0 border-0">
+                <div class="table-responsive">
+                    <table class="table premium-table mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Entity</th>
+                                <th>ML Recommendation</th>
+                                <th class="text-end">Risk Level</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in suspicious %}
+                            <tr class="bg-danger bg-opacity-5">
+                                <td class="small">{{ row.date }}</td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ row.name }}</div>
+                                    <div class="text-muted small">{{ row.phone }}</div>
+                                </td>
+                                <td class="small text-danger fw-medium">{{ row.recommendation }}</td>
+                                <td class="text-end"><span class="badge-premium bg-danger text-white">CRITICAL</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">Scanning... No active critical threats detected.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Adulteration Analysis (Water Mixing Monitor) -->
+        <div class="glass-card mb-4 border-primary animate-slide-up" style="animation-delay: 0.1s;">
+            <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-primary d-flex align-items-center gap-2">
+                    <i data-lucide="droplet"></i> Adulteration Analysis
+                </h5>
+                <span class="badge-premium bg-primary bg-opacity-10 text-primary">Water Sensor Logs</span>
+            </div>
+            <div class="premium-table-container rounded-0 border-0">
+                <div class="table-responsive">
+                    <table class="table premium-table mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Farmer</th>
+                                <th>Water %</th>
+                                <th>Fat</th>
+                                <th>pH</th>
+                                <th>Temp</th>
+                                <th>Severity</th>
+                                <th>Fraud Score</th>
+                                <th class="text-end">Suggested Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in water_alerts %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ row.name }}</div>
+                                    <div class="text-muted small">{{ row.phone }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold {{ 'text-danger' if row.water_percent > 10 else 'text-warning' }}">
+                                        {{ row.water_percent }}%
+                                    </div>
+                                </td>
+                                <td class="small">{{ "%.2f"|format(row.fat|float) if row.fat else "0.00" }}%</td>
+                                <td class="small">{{ "%.2f"|format(row.ph|float) if row.ph else "0.00" }}</td>
+                                <td class="small">{{ "%.1f"|format(row.temperature|float) if row.temperature else "0.0" }}°C</td>
+                                <td>
+                                    {% set severity = 'critical' if row.water_percent|float > 20 else 'high' if row.water_percent|float > 10 else 'warning' if row.water_percent|float > 5 else 'normal' %}
+                                    <span class="badge-severity {{ severity }}">
+                                        {{ severity|upper }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="fw-bold text-dark">{{ row.fraud_score or 0 }}%</div>
+                                    <div class="progress" style="height: 4px; width: 40px; margin: 0 auto;">
+                                        <div class="progress-bar bg-{{ 'danger' if (row.fraud_score or 0) > 70 else 'warning' if (row.fraud_score or 0) > 30 else 'success' }}" 
+                                             style="width: {{ row.fraud_score or 0 }}%"></div>
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="small fw-semibold text-wrap" style="max-width: 200px;">{{ row.recommendation }}</div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">All purity checks within normal range.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Poor Quality Reports -->
+        <div class="glass-card mb-4 border-orange animate-slide-up" style="animation-delay: 0.2s;">
+            <div class="p-4 bg-white border-bottom">
+                <h5 class="fw-bold mb-0 text-orange d-flex align-items-center gap-2">
+                    <i data-lucide="thermometer-snowflake"></i> Sub-optimal Grade Reports
+                </h5>
+            </div>
+            <div class="premium-table-container rounded-0 border-0">
+                <div class="table-responsive">
+                    <table class="table premium-table mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Fat %</th>
+                                <th>pH</th>
+                                <th>Temp</th>
+                                <th class="text-end">AI Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in poor_quality %}
+                            <tr>
+                                <td class="fw-bold">{{ row.name }}</td>
+                                <td>{{ row.fat }}%</td>
+                                <td>{{ row.ph }}</td>
+                                <td>{{ row.temperature }}°C</td>
+                                <td class="text-end"><span class="badge-premium bg-danger bg-opacity-10 text-danger">POOR</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">All recent collections meet Medium/High quality standards.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar: Logic & Leaderboard -->
+    <div class="col-lg-4 stagger-load">
+        <!-- AI Decision Logic -->
+        <div class="glass-card p-4 mb-4 border-primary bg-primary bg-opacity-5">
+            <h6 class="fw-bold text-primary mb-3 d-flex align-items-center gap-2">
+                <i data-lucide="binary" style="width: 18px;"></i> Risk Engine Logic
+            </h6>
+            <div class="small">
+                <div class="mb-3">
+                    <span class="fw-bold text-danger d-block">Critical Escalation:</span>
+                    <p class="text-muted mb-0">Halt payments for mixed water > 20% or pH outside [6.4 - 6.8].</p>
+                </div>
+                <div class="mb-3">
+                    <span class="fw-bold text-primary d-block">Quality Grading:</span>
+                    <p class="text-muted mb-0">XGBoost model classifies based on Fat, SNF, and Temperature sensors.</p>
+                </div>
+                <div>
+                    <span class="fw-bold text-success d-block">Farmer Scoring:</span>
+                    <p class="text-muted mb-0">Dynamic score based on last 30 days' reliability and purity.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Farmers -->
+        <div class="glass-card mb-4 overflow-hidden shadow-lg border-accent">
+            <div class="p-4 bg-accent bg-opacity-10 text-accent border-bottom">
+                <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                    <i data-lucide="award"></i> Top Rated Producers
+                </h6>
+            </div>
+            <div class="list-group list-group-flush bg-transparent">
+                {% for farmer in top_farmers %}
+                <div class="list-group-item bg-transparent border-0 px-4 py-3 border-bottom border-opacity-10">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold mb-0">{{ farmer.name }}</h6>
+                            <span class="small text-muted">Purity Index: High</span>
+                        </div>
+                        <div class="text-end">
+                            <div class="h5 fw-bold text-accent mb-0">{{ farmer.performance_score }}</div>
+                            <span class="small text-muted">Score</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

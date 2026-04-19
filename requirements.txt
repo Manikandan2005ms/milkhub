@@ -1,0 +1,14 @@
+Flask==3.0.3
+mysql-connector-python==9.0.0
+fpdf2
+requests
+python-telegram-bot
+pandas
+scikit-learn
+numpy
+joblib
+matplotlib
+seaborn
+apscheduler
+openpyxl
+pdfplumber

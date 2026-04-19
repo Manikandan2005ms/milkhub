@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Report | {{ farmer.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-end gap-3 mb-5 animate-slide-up">
+    <div>
+        <h1 class="display-5 fw-bold mb-1">Monthly Analytics</h1>
+        <p class="text-muted mb-0">{{ farmer.name }} | {{ selected_month }}/{{ selected_year }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('monthly_report_pdf', farmer_id=farmer.id, month=selected_month, year=selected_year) }}" class="btn btn-premium">
+            <i data-lucide="download-cloud"></i> Export PDF
+        </a>
+        <a href="{{ url_for('farmer_dashboard', farmer_id=farmer.id) if user.role == 'farmer' else url_for(user.role + '_dashboard') }}" class="btn btn-premium-outline">
+            <i data-lucide="arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- Filter Control -->
+<div class="glass-card p-4 mb-5 animate-slide-up border-0 shadow-sm">
+    <form action="{{ url_for('monthly_report', farmer_id=farmer.id) }}" method="GET" class="row g-3 align-items-center">
+        <div class="col-12 col-md-auto">
+            <label for="month" class="small fw-bold text-muted text-uppercase d-block mb-1">Select Period</label>
+            <div class="d-flex gap-2">
+                <select name="month" id="month" class="form-select premium-input">
+                    {% for m in months %}
+                        <option value="{{ m.val }}" {% if m.val == selected_month %}selected{% endif %}>{{ m.name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="year" id="year" class="form-select premium-input">
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-premium-outline px-4">
+                    <i data-lucide="filter" style="width: 18px;"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Performance Cards -->
+<div class="row g-4 mb-5 stagger-load">
+    <div class="col-12 col-md-6">
+        <div class="glass-card p-4 h-100 overflow-hidden position-relative">
+            <div class="stat-card-icon icon-blue">
+                <i data-lucide="droplets"></i>
+            </div>
+            <p class="text-muted small fw-bold text-uppercase mb-1">Cumulative Yield</p>
+            <h2 class="display-5 fw-bold mb-0 text-primary">{{ "%.2f"|format(totals.total_litres) }} <small class="fs-6 text-muted">L</small></h2>
+        </div>
+    </div>
+    <div class="col-12 col-md-6">
+        <div class="glass-card p-4 h-100 overflow-hidden position-relative">
+            <div class="stat-card-icon icon-green">
+                <i data-lucide="banknote"></i>
+            </div>
+            <p class="text-muted small fw-bold text-uppercase mb-1">Monthly Procurement Value</p>
+            <h2 class="display-5 fw-bold mb-0 text-success">₹{{ "%.2f"|format(totals.total_amount) }}</h2>
+        </div>
+    </div>
+</div>
+
+<!-- Comprehensive Data Table -->
+<div class="glass-card overflow-hidden animate-slide-up">
+    <div class="p-4 bg-white border-bottom">
+        <h5 class="fw-bold mb-0">Detailed Collection Log</h5>
+    </div>
+    <div class="premium-table-container border-0 rounded-0">
+        <div class="table-responsive">
+            <table class="table premium-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Date & Shift</th>
+                        <th>Milk (L)</th>
+                        <th>Fat %</th>
+                        <th>Quality</th>
+                        <th>Base Rate</th>
+                        <th class="text-end">Final Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ record.date }}</div>
+                            <div class="text-muted small">{{ "Morning" if record.session == "FN" else "Evening" }}</div>
+                        </td>
+                        <td><span class="fw-bold">{{ "%.2f"|format(record.litres) }}</span></td>
+                        <td>{{ "%.2f"|format(record.fat) }}%</td>
+                        <td>
+                            {% set quality = get_quality_rating(record.fat, record.water_percent) %}
+                            <span class="badge-quality {{ quality|lower }} p-1" style="font-size: 0.65rem;">
+                                {{ quality }}
+                            </span>
+                            {% if record.deduction > 0 %}
+                            <div class="smaller text-danger fw-medium mt-1">
+                                <i data-lucide="info" style="width: 10px;"></i> {{ record.deduction_reason }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>₹{{ "%.2f"|format(record.final_rate) }}</td>
+                        <td class="text-end fw-bold">₹{{ "%.2f"|format(record.amount) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">No records found for the selected month.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if records %}
+                <tfoot class="bg-light fw-bold">
+                    <tr>
+                        <td>TOTAL</td>
+                        <td>{{ "%.2f"|format(totals.total_litres) }} L</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="text-end text-primary">₹{{ "%.2f"|format(totals.total_amount) }}</td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

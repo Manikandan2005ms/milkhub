@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Reports | MilkHub AI{% endblock %}
+
+{% block content %}
+<div class="animate-slide-up">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-4 mb-5">
+        <div>
+            <h1 class="fw-bold mb-1" style="color: var(--secondary); font-family: var(--font-heading); font-size: var(--h2);">Reports Hub</h1>
+            <p class="text-muted mb-0">Filter, analyze, and export milk collection data across specific ranges.</p>
+        </div>
+        <div class="d-flex gap-2 w-100 w-md-auto">
+             <button class="btn btn-premium-outline flex-grow-1 flex-md-grow-0" type="button" data-bs-toggle="modal" data-bs-target="#exportModal">
+                <i data-lucide="download"></i> Export Results
+            </button>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-premium flex-grow-1 flex-md-grow-0">
+                <i data-lucide="layout-dashboard"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Engine Card -->
+    <div class="glass-card p-4 mb-5 shadow-sm">
+        <form action="{{ url_for('reports') }}" method="GET" id="filterForm">
+            <div class="row g-3">
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label class="form-label small fw-bold text-muted">START DATE</label>
+                    <input type="date" name="start_date" class="form-control premium-input shadow-none" value="{{ filters.start_date }}">
+                </div>
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label class="form-label small fw-bold text-muted">END DATE</label>
+                    <input type="date" name="end_date" class="form-control premium-input shadow-none" value="{{ filters.end_date }}">
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label class="form-label small fw-bold text-muted">FARMER NAME</label>
+                    <select name="farmer_id" class="form-select premium-input shadow-none">
+                        <option value="">All Farmers</option>
+                        {% for farmer in farmers %}
+                        <option value="{{ farmer.id }}" {{ 'selected' if filters.farmer_id|string == farmer.id|string }}>{{ farmer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-3 col-lg-2">
+                    <label class="form-label small fw-bold text-muted">QUALITY</label>
+                    <select name="quality" class="form-select premium-input shadow-none">
+                        <option value="">All Qualities</option>
+                        <option value="Excellent" {{ 'selected' if filters.quality == 'Excellent' }}>Excellent</option>
+                        <option value="Good" {{ 'selected' if filters.quality == 'Good' }}>Good</option>
+                        <option value="Average" {{ 'selected' if filters.quality == 'Average' }}>Average</option>
+                        <option value="Poor" {{ 'selected' if filters.quality == 'Poor' }}>Poor</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-3 col-lg-2">
+                    <label class="form-label small fw-bold text-muted">SESSION</label>
+                    <select name="session" class="form-select premium-input shadow-none">
+                        <option value="">All Sessions</option>
+                        <option value="FN" {{ 'selected' if filters.session == 'FN' }}>Morning (FN)</option>
+                        <option value="AN" {{ 'selected' if filters.session == 'AN' }}>Evening (AN)</option>
+                    </select>
+                </div>
+                <div class="col-12 col-lg-1 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-premium w-100 py-2 justify-content-center" title="Search">
+                        <i data-lucide="search" style="width: 20px;"></i>
+                    </button>
+                    <a href="{{ url_for('reports') }}" class="btn btn-light border py-2 px-3" title="Reset Filters">
+                        <i data-lucide="refresh-cw" style="width: 20px;"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Table -->
+    <div class="glass-card mb-5">
+        <div class="p-4 border-bottom bg-white d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0" style="font-family: var(--font-heading);">Filter Results</h5>
+            <span class="badge bg-light text-muted border px-3 rounded-pill">{{ records|length }} Records Found</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table premium-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Farmer</th>
+                        <th>Session</th>
+                        <th>Litres</th>
+                        <th>Fat</th>
+                        <th>Water %</th>
+                        <th>pH</th>
+                        <th>Quality</th>
+                        <th>Rate</th>
+                        <th class="text-end px-4">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td class="small fw-bold">{{ record.date }}</td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ record.farmer_name }}</div>
+                            <div class="text-muted smaller">{{ record.farmer_phone }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border-0 smaller py-1 px-2">
+                                {{ "Morning" if record.session == "FN" else "Evening" }}
+                            </span>
+                        </td>
+                        <td class="fw-bold">{{ "%.1f"|format(record.litres) }} L</td>
+                        <td class="small fw-semibold">{{ record.fat }}%</td>
+                        <td class="small">{{ record.water_percent or '0' }}%</td>
+                        <td class="small">{{ record.ph or '6.6' }}</td>
+                        <td>
+                            {% set quality = get_quality_rating(record.fat, record.water_percent) %}
+                            {% set q_class = quality|lower %}
+                            <span class="badge-quality {{ q_class }}">
+                                {{ quality }}
+                            </span>
+                        </td>
+                        <td class="fw-bold text-primary">₹{{ "%.2f"|format(record.final_rate) }}</td>
+                        <td class="text-end px-4 fw-bold text-dark">₹{{ "%.2f"|format(record.amount) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-5">
+                            <div class="py-4">
+                                <i data-lucide="database" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
+                                <h6 class="text-muted fw-bold">No collections found for these filters.</h6>
+                                <p class="smaller text-muted">Try expanding your date range or changing your search criteria.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if records %}
+                <tfoot class="bg-light bg-opacity-50">
+                    <tr class="fw-bold border-top border-2">
+                        <td colspan="3" class="text-muted small">TOTAL SUMMARY</td>
+                        <td class="fs-5 text-primary">{{ "%.1f"|format(total_litres) }} L</td>
+                        <td colspan="5"></td>
+                        <td class="text-end px-4 fs-5">₹{{ "%.2f"|format(total_amount) }}</td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Filtered Export -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content glass-card border-0">
+            <div class="modal-header border-bottom p-4">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2" style="font-family: var(--font-heading);">
+                    <i data-lucide="download-cloud" class="text-primary"></i> Export These Results
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4">The export will include all <b>{{ records|length }}</b> records found using your current filters.</p>
+                <div class="row g-3">
+                    {% set export_params = 'start_date=' + filters.start_date + '&end_date=' + filters.end_date + '&farmer_id=' + filters.farmer_id + '&quality=' + filters.quality + '&session=' + filters.session %}
+                    <div class="col-12 col-md-4">
+                        <a href="{{ url_for('export_data', file_type='pdf') }}?{{ export_params }}" class="export-card-link">
+                            <div class="glass-card p-4 text-center h-100 export-card">
+                                <div class="bg-danger bg-opacity-10 rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i data-lucide="file-text" class="text-danger"></i>
+                                </div>
+                                <h6 class="fw-bold mb-1">PDF Report</h6>
+                                <p class="smaller text-muted mb-0">Filtered results</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <a href="{{ url_for('export_data', file_type='excel') }}?{{ export_params }}" class="export-card-link">
+                            <div class="glass-card p-4 text-center h-100 export-card">
+                                <div class="bg-primary bg-opacity-10 rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i data-lucide="file-spreadsheet" class="text-primary"></i>
+                                </div>
+                                <h6 class="fw-bold mb-1">Excel Sheet</h6>
+                                <p class="smaller text-muted mb-0">Filtered results</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <a href="{{ url_for('export_data', file_type='csv') }}?{{ export_params }}" class="export-card-link">
+                            <div class="glass-card p-4 text-center h-100 export-card">
+                                <div class="bg-success bg-opacity-10 rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i data-lucide="file-code" class="text-success"></i>
+                                </div>
+                                <h6 class="fw-bold mb-1">CSV Data</h6>
+                                <p class="smaller text-muted mb-0">Filtered results</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

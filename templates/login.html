@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Login | MilkHub AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #fff;
+        overflow-y: auto;
+    }
+    
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+    }
+
+    /* Left Side: Auth Panel */
+    .auth-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+        background: var(--bg-main);
+        position: relative;
+        z-index: 10;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 450px;
+        border-radius: var(--radius-xl);
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        padding: 3rem;
+        animation: slideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Right Side: Hero Branding */
+    .hero-section {
+        flex: 1;
+        display: none;
+        background: url('/static/img/login_hero.png') center/cover no-repeat;
+        position: relative;
+    }
+
+    @media (min-width: 992px) {
+        .hero-section {
+            display: flex;
+            align-items: flex-end;
+            padding: 4rem;
+        }
+    }
+
+    .hero-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0) 60%);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        color: white;
+    }
+
+    /* Form Improvements */
+    .premium-input {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        padding: 0.8rem 1rem !important;
+        transition: all 0.3s ease;
+    }
+
+    .premium-input:focus {
+        background: #fff !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+    }
+
+    .icon-badge {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border-radius: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <!-- Auth Side -->
+    <div class="auth-panel">
+        <div class="login-card">
+            <div class="text-center">
+                <div class="icon-badge mx-auto">
+                    <i data-lucide="droplets" style="width: 32px; height: 32px;"></i>
+                </div>
+                <h1 class="fw-bold mb-1" style="font-family: var(--font-heading); font-size: 2.25rem; color: var(--secondary);">MilkHub AI</h1>
+                <p class="text-muted mb-4 fw-medium">Smart Dairy Management Platform</p>
+            </div>
+
+            <form action="{{ url_for('login') }}" method="POST" class="mt-4">
+                <div class="mb-4">
+                    <label for="phone" class="form-label fw-bold small text-uppercase text-muted mb-2 ls-1">Operator Mobile</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 rounded-pill rounded-end-0 ps-3">
+                            <i data-lucide="smartphone" class="text-primary" style="width: 18px;"></i>
+                        </span>
+                        <input type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}"
+                               class="form-control premium-input border-start-0 rounded-pill rounded-start-0 py-3" 
+                               id="phone" name="phone" placeholder="9999999999" required autofocus>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="btn btn-premium btn-lg w-100 py-3 justify-content-center">
+                        Secure Authentication
+                        <i data-lucide="shield-check" class="ms-2"></i>
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-5 pt-4 border-top border-light">
+                <p class="text-muted small mb-0">© 2026 MilkHub AI. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Side -->
+    <div class="hero-section">
+        <div class="hero-overlay"></div>
+        <div class="hero-content stagger-load">
+            <span class="badge bg-primary px-3 py-2 rounded-pill mb-3">Enterprise Ready</span>
+            <h2 class="display-4 fw-bold mb-3" style="font-family: var(--font-heading);">Empowering the Future of Dairy</h2>
+            <p class="lead text-white-50 opacity-75 mb-0">Join 5,000+ farmers in optimizing milk collection with autonomous AI insights and real-time yield grading.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

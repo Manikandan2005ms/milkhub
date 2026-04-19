@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}AI Batch Predict | MilkHub AI{% endblock %}
+
+{% block content %}
+<div class="animate-slide-up">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-4 mb-5">
+        <div>
+            <h1 class="fw-bold mb-1" style="color: var(--secondary); font-family: var(--font-heading); font-size: var(--h2);">AI Batch Predict</h1>
+            <p class="text-muted mb-0">Upload collection history for instant AI analysis, fraud detection, and yield forecasting.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-premium-outline">
+                <i data-lucide="layout-dashboard"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Upload Section -->
+        <div class="col-12 col-lg-5">
+            <form action="{{ url_for('upload_predict') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="glass-card p-4 h-100">
+                    <h5 class="fw-bold mb-4">Ingest Data File</h5>
+                    
+                    <div id="drop-zone" class="drop-zone mb-4 bg-light bg-opacity-50 border-dashed rounded-4 p-5 text-center transition-all">
+                        <input type="file" name="file" id="fileInput" class="d-none" accept=".csv,.xlsx,.xls,.pdf">
+                        <div class="drop-zone-content">
+                            <div class="bg-primary bg-opacity-10 rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                <i data-lucide="upload-cloud" class="text-primary" style="width: 32px; height: 32px;"></i>
+                            </div>
+                            <h6 class="fw-bold mb-1">Drag and drop file here</h6>
+                            <p class="smaller text-muted">Supports CSV, Excel, and PDF</p>
+                            <button type="button" class="btn btn-sm btn-outline-primary px-3 rounded-pill mt-2" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+                        </div>
+                        <div id="file-info" class="d-none mt-3">
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <i data-lucide="file" class="text-primary" style="width: 18px;"></i>
+                                <span id="filename-display" class="fw-bold small"></span>
+                                <button type="button" class="btn-close" onclick="resetFileSelection()" style="font-size: 0.7rem;"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer-buttons d-flex gap-3">
+                        <button type="submit" class="btn btn-premium flex-grow-1 py-3" id="uploadBtn">
+                            <i data-lucide="chevrons-right"></i> Upload & Process
+                        </button>
+                        <button type="button" class="btn btn-light border flex-grow-1 py-3" onclick="location.href='{{ url_for('upload_predict') }}'">
+                            <i data-lucide="refresh-cw"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Prediction Stats Sidebar -->
+        <div class="col-12 col-lg-7">
+            <div class="glass-card p-4 h-100 border-start border-4 border-primary">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0">AI Orchestration</h5>
+                    {% if data %}
+                    <span class="badge bg-primary px-3 rounded-pill">{{ data|length }} Records Loaded</span>
+                    {% endif %}
+                </div>
+
+                {% if data %}
+                <div class="mb-5">
+                    <p class="text-muted small mb-4">Your records are loaded and verified. Click the button below to initiate the AI Analysis engine.</p>
+                    <button type="button" class="btn btn-primary w-100 py-3 fw-bold rounded-4 shadow-sm" id="predictBtn">
+                        <i data-lucide="sparkles" class="me-2"></i> INITIATE AI PREDICTIONS
+                    </button>
+                </div>
+
+                <div id="ai-loading" class="d-none text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <h6 class="fw-bold">MilkHub AI is analyzing...</h6>
+                    <p class="smaller text-muted">Calculating quality scores, detecting risks, and generating smart recommendations.</p>
+                </div>
+
+                <div id="ai-results" class="d-none">
+                    <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i data-lucide="target" class="text-success"></i> Prediction Outputs
+                    </h6>
+                    <div class="table-responsive bg-white rounded-4 border shadow-sm">
+                        <table class="table table-sm align-middle mb-0" id="resultsTable">
+                            <thead class="bg-light">
+                                <tr class="smaller text-muted text-uppercase">
+                                    <th class="ps-3">Farmer</th>
+                                    <th>Quality Score</th>
+                                    <th>Risk</th>
+                                    <th>AI Suggestion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody">
+                                <!-- Results will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i data-lucide="brain-circuit" class="text-muted mb-3 opacity-25" style="width: 60px; height: 60px;"></i>
+                    <h6 class="text-muted fw-bold">No Data Ready for Analysis</h6>
+                    <p class="smaller text-muted px-4">Upload a file first to initialize the prediction engine.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.drop-zone {
+    border: 2px dashed #e2e8f0;
+    cursor: pointer;
+}
+.drop-zone.dragover {
+    background: rgba(59, 130, 246, 0.05) !important;
+    border-color: var(--primary) !important;
+}
+.transition-all {
+    transition: all 0.2s ease-in-out;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('file-info');
+    const dropContent = dropZone.querySelector('.drop-zone-content');
+    const filenameDisplay = document.getElementById('filename-display');
+    const predictBtn = document.getElementById('predictBtn');
+    const aiResults = document.getElementById('ai-results');
+    const aiLoading = document.getElementById('ai-loading');
+    const resultsBody = document.getElementById('resultsBody');
+
+    // Drag and Drop implementation
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'));
+    });
+
+    dropZone.addEventListener('drop', e => {
+        const files = e.dataTransfer.files;
+        if (files.length) {
+            fileInput.files = files;
+            handleFileSelect(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) handleFileSelect(fileInput.files[0]);
+    });
+
+    function handleFileSelect(file) {
+        filenameDisplay.textContent = file.name;
+        dropContent.classList.add('d-none');
+        fileInfo.classList.remove('d-none');
+    }
+
+    window.resetFileSelection = function() {
+        fileInput.value = '';
+        dropContent.classList.remove('d-none');
+        fileInfo.classList.add('d-none');
+    }
+
+    // Prediction Call
+    if (predictBtn) {
+        predictBtn.addEventListener('click', async () => {
+            predictBtn.classList.add('d-none');
+            aiLoading.classList.remove('d-none');
+            aiResults.classList.add('d-none');
+
+            try {
+                const response = await fetch('/api/predict_batch', { method: 'POST' });
+                const contentType = response.headers.get("content-type");
+                
+                if (response.ok && contentType && contentType.includes("application/json")) {
+                    const data = await response.json();
+                    if (data.results) {
+                        resultsBody.innerHTML = '';
+                        data.results.forEach(res => {
+                            const tr = document.createElement('tr');
+                            const riskClass = res.fraud_risk === 'High' ? 'text-danger' : (res.fraud_risk === 'Medium' ? 'text-warning' : 'text-success');
+                            
+                            tr.innerHTML = `
+                                <td class="ps-3 py-3">
+                                    <div class="fw-bold small">Farmer #${res.farmer_phone || 'N/A'}</div>
+                                    <div class="smaller text-muted">${res.date || 'No Date'} | ${res.session || 'FN'}</div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress" style="width: 50px; height: 4px;">
+                                            <div class="progress-bar bg-primary" style="width: ${res.quality_score || 0}%"></div>
+                                        </div>
+                                        <span class="small fw-bold">${res.quality_score || 0}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge ${riskClass} bg-light border smaller">${res.fraud_risk || 'Low'} Risk</span>
+                                </td>
+                                <td class="small text-muted" style="max-width: 250px;">
+                                    <div class="text-truncate" title="${res.recommendation || ''}">${res.recommendation || 'No recommendation available.'}</div>
+                                </td>
+                            `;
+                            resultsBody.appendChild(tr);
+                        });
+
+                        aiLoading.classList.add('d-none');
+                        aiResults.classList.remove('d-none');
+                        lucide.createIcons();
+                        return;
+                    }
+                }
+
+                // If we reach here, something is wrong
+                let errorMsg = 'Unknown Error';
+                try {
+                    const errorData = await response.json();
+                    errorMsg = errorData.error || response.statusText;
+                } catch (e) {
+                    errorMsg = await response.text();
+                    errorMsg = errorMsg.substring(0, 100) + '...';
+                }
+
+                alert(`Prediction Error (Status ${response.status}): ${errorMsg}`);
+                predictBtn.classList.remove('d-none');
+                aiLoading.classList.add('d-none');
+
+            } catch (err) {
+                console.error("AI Hub Connection Error:", err);
+                let detail = err.message || "The server closed the connection unexpectedly.";
+                if (err.name === 'TypeError' && detail.includes('fetch')) {
+                    detail = "Network error or server crash. Check if the terminal shows a segmentation fault.";
+                }
+                
+                alert(`Connection Error:\n\nDetails: ${detail}\n\nTroubleshooting:\n1. Check if the server is still running.\n2. Refresh the page and try again.\n3. Try a smaller batch (10-20 records).`);
+                
+                predictBtn.classList.remove('d-none');
+                aiLoading.classList.add('d-none');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
