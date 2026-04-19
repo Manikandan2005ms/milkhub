@@ -8,7 +8,7 @@ import requests
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = int(os.getenv("DB_PORT", "3306"))
 DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "Mmani2005@")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "Enter DB Password")
 DB_NAME = os.getenv("DB_NAME", "milk_collection")
 
 # Pricing Configuration (Matching app.py logic)
