@@ -7,7 +7,7 @@ from datetime import date
 from sample_data_generator import generate_session_data
 
 # Config
-TELEGRAM_BOT_TOKEN = "8651377308:AAGQlFuV67nGQe3MB23E0V4kiRtToyRMR6g"
+TELEGRAM_BOT_TOKEN = "Bot Token"
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = int(os.getenv("DB_PORT", "3306"))
 DB_USER = os.getenv("DB_USER", "root")
